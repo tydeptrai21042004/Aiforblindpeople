@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Recognition Web UI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom, #87CEEB, #f4f4f9);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+        body.dark-mode {
+            background: linear-gradient(to bottom, #2c3e50, #34495e);
+            color: #f5f6fa;
+        }
+        /* Floating Animation */
+        .background-animation {
+            position: absolute;
+            top: -100px;
+            left: -200px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,215,0,1) 40%, rgba(255,165,0,0.8) 80%, rgba(255,69,0,0) 100%);
+            opacity: 0.8;
+            z-index: -1;
+            border-radius: 50%;
+            box-shadow: 0 0 100px rgba(255, 215, 0, 0.6);
+            animation: moveSun 12s linear infinite;
+            transition: background 0.5s ease, box-shadow 0.5s ease;
+        }
+        body.dark-mode .background-animation {
+            background: radial-gradient(circle, rgba(255,255,255,1) 40%, rgba(200,200,255,0.8) 80%, rgba(255,255,255,0) 100%);
+            box-shadow: 0 0 80px rgba(200, 200, 255, 0.6);
+        }      
+        @keyframes moveSun {
+            0% {
+                transform: translateX(0) translateY(0);
+            }
+            50% {
+                transform: translateX(1100px) translateY(-200px);
+            }
+            100% {
+                transform: translateX(0) translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            text-align: center;
+            animation: fadeIn 2s ease-in-out;
+        }
+        h1.dark-mode {
+            color: #f5f6fa;
+        }
+        @keyframes wave {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+          }
+          
+          .wave {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            text-align: center;
+            animation: wave 2s ease-in-out infinite;
+          }
+          
+        .button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 50px;
+            box-shadow: 0px 5px 15px rgba(0, 123, 255, 0.4);
+            transition: background-color 0.3s, box-shadow 0.3s;
+            animation: pulse 2s infinite;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+            box-shadow: 0px 5px 15px rgba(0, 86, 179, 0.6);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .transcript {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+            font-size: 1.2rem;
+            color: #333;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            word-wrap: break-word;
+            text-align: center;
+        }
+
+        .transcript.visible {
+            opacity: 1;
+        }
+        body.dark-mode .transcript {
+            background-color: #2c3e50;
+            color: #f5f6fa;
+        }
+        .file-content-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 30px;
+        }
+
+        .file-content {
+            flex: 1;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            font-size: 1rem;
+            color: #333;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-height: 400px; /* Set a fixed height */
+            overflow-y: auto; /* Add vertical scrollbar if content exceeds height */
+        }
+        
+        body.dark-mode .file-content {
+            background-color: #2c3e50;
+            color: #f5f6fa;
+        }
+        .file-content.visible {
+            opacity: 1;
+        }
+
+        .file-content h2 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: #007bff;
+        }
+
+        .file-content pre {
+            font-size: 1rem;
+            background-color: #f0f0f5;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+        }
+        body.dark-mode .file-content pre {
+            background-color: #34495e;
+        }
+
+        .toggle-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: #f5f6fa;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+        }
+
+        .toggle-button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background animation -->
+    <div class="background-animation"></div>
+    <button class="toggle-button" id="darkModeToggle">Dark Mode</button>
+    <h1 class="wave">Speech Recognition</h1>
+    <button id="listenBtn" class="button">Start Listening</button>
+    
+    <div id="transcript" class="transcript"></div>
+
+    <div class="file-content-container">
+        <div id="fileContent1" class="file-content">
+            <h2>Users ask:</h2>
+            <p>No questions yet.</p>
+        </div>
+        <div id="fileContent2" class="file-content">
+            <h2>Chatbot responses:</h2>
+            <p>No responses yet.</p>
+        </div>
+    </div>
+
+    <script>
+        const listenBtn = document.getElementById('listenBtn');
+        const transcriptDiv = document.getElementById('transcript');
+        const userAskDiv = document.getElementById('fileContent1');
+        const botResponseDiv = document.getElementById('fileContent2');
+        const fileContent1Div = document.getElementById('fileContent1');
+        const fileContent2Div = document.getElementById('fileContent2');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+        let isDarkMode = false;
+    
+        listenBtn.addEventListener('click', () => {
+            listenBtn.innerText = 'Listening...';
+            listenBtn.disabled = true;
+            listenBtn.style.backgroundColor = '#6c757d';
+            transcriptDiv.classList.remove('visible');
+            transcriptDiv.innerText = '';
+    
+            fetch('/start-listening', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    transcriptDiv.innerText = `You said: ${data.transcript}`;
+                    transcriptDiv.classList.add('visible');
+    
+                    // Add user input to the "Users ask" section
+                    userAskDiv.innerHTML = `<h2>Users ask:</h2><p>${data.transcript || 'No input provided'}</p>`;
+    
+                    // Simulate chatbot response
+                    const chatbotResponse = "I'm here to help!";
+                    botResponseDiv.innerHTML = `<h2>Chatbot responses:</h2><p>${chatbotResponse || 'No response generated'}</p>`;
+    
+                    listenBtn.innerText = 'Start Listening';
+                    listenBtn.disabled = false;
+                    listenBtn.style.backgroundColor = '#007bff';
+                })
+                .catch(error => {
+                    transcriptDiv.innerText = 'Error occurred. Try again.';
+                    transcriptDiv.classList.add('visible');
+                    listenBtn.innerText = 'Start Listening';
+                    listenBtn.disabled = false;
+                });
+        });
+    
+
+        function fetchAndDisplayFileContent() {
+            fetch('/file1')
+                .then(response => response.text())
+                .then(data => {
+                    const fileContent1 = data || 'Hi chatbot! I\'m here to help. Feel free to ask me anything!';
+                    fileContent1Div.innerHTML = `<pre>${fileContent1}</pre>`;
+                    fileContent1Div.classList.add('visible');
+                })
+                .catch(error => {
+                    fileContent1Div.innerHTML = '<pre>Error occurred. Try again.</pre>';
+                    fileContent1Div.classList.add('visible');
+                });
+    
+            fetch('/file2')
+                .then(response => response.text())
+                .then(data => {
+                    const fileContent2 = data || 'Hi chatbot! I\'m here to help. Feel free to ask me anything!';
+                    fileContent2Div.innerHTML = `<pre>${fileContent2}</pre>`;
+                    fileContent2Div.classList.add('visible');
+                })
+                .catch(error => {
+                    fileContent2Div.innerHTML = '<pre>Error occurred. Try again.</pre>';
+                    fileContent2Div.classList.add('visible');
+                });
+        }
+    
+        window.onload = () => {
+            fetchAndDisplayFileContent(); // Initial fetch
+    
+            setInterval(fetchAndDisplayFileContent, 2000); // Fetch every 2 seconds
+        };
+    
+        darkModeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            body.classList.toggle('dark-mode');
+            darkModeToggle.innerText = isDarkMode ? 'Light Mode' : 'Dark Mode';
+        });
+    </script>
+    
+</body>
+</html>
